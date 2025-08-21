@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+**pycache__/
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Docker
+.dockerignore
+
+# IDE / Editor specific
+.vscode/
+.idea/
+
+# Local secrets and config
+.env
+
+# Debug output
+debug/
+
+# OS-specific
+.DS_Store

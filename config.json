@@ -1,0 +1,13 @@
+[
+  {
+    "keyword": "generative art",
+    "author": null,
+    "days_limit": 30
+  },
+  {
+    "keyword": "LLM Agents",
+    "author": "youssefhosni95",
+    "days_limit": 90,
+    "max_pages": 5
+  }
+]

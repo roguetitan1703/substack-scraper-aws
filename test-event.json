@@ -1,0 +1,15 @@
+{
+  "jobs": [
+    {
+      "keyword": "SaaS metrics",
+      "author": "pragmaticengineer",
+      "days_limit": 365,
+      "max_pages": 5
+    },
+    {
+      "keyword": "generative art",
+      "author": null,
+      "days_limit": 7
+    }
+  ]
+}
