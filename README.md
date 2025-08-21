@@ -172,7 +172,7 @@ Your webhook endpoint will receive a `POST` request with a JSON body structured 
           "comments_count": 12,
           "restacks": 25,
           "engagement": 142,
-          "url": "[https://substack.com/note/12345678](https://substack.com/note/12345678)"
+          "url": "https://substack.com/note/12345678"
         }
       ]
     }
