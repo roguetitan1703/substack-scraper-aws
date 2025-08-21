@@ -31,11 +31,26 @@ This project uses a container image based on Microsoft's official Playwright ima
 
 ### Prerequisites
 
-- Docker Desktop
-- An AWS Account
-- [Configured AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
+1.  **Docker Desktop**: Install from the [official Docker website](https://www.docker.com/products/docker-desktop/).
+2.  **AWS CLI**:
 
-### 1. Build the Docker Image
+    - [Install the AWS Command Line Interface](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html).
+    - Configure the CLI by running `aws configure` and providing your **AWS Access Key ID**, **Secret Access Key**, and **Default region** (e.g., `us-east-1`).
+
+      ```sh
+      aws configure
+      ```
+
+### 1. Clone the Repository
+
+Clone the project files to your local machine.
+
+```sh
+git clone https://github.com/roguetitan1703/substack-scraper-aws.git
+cd substack-scraper-aws
+```
+
+### 2\. Build the Docker Image
 
 Build the image using the `--platform` flag to ensure compatibility with the AWS Lambda environment.
 
@@ -43,59 +58,67 @@ Build the image using the `--platform` flag to ensure compatibility with the AWS
 docker build --platform linux/amd64 -t substack-scraper .
 ```
 
-### 2\. Create ECR Repository & Get Push Commands
+### 3\. Create ECR Repository & Get Push Commands
 
-It's easiest to create the repository via the AWS website, as it provides the necessary login and push commands.
+Create the repository using the AWS Management Console. The console provides a "View push commands" button which simplifies the next steps.
 
 1.  In the AWS Console, navigate to the **ECR (Elastic Container Registry)** service.
 2.  Click **Create repository**.
 3.  Set the **Repository name** to `substack-scraper` and click **Create repository**.
-4.  Once created, select the new repository and click the **View push commands** button in the top right.
-5.  This modal contains the exact commands you need for the next two steps.
+4.  Once created, select the new repository and click the **View push commands** button in the top right. This modal contains the exact commands you need for the next two steps.
 
-### 3\. Authenticate Docker with ECR
+<img src="images/AWS%20ECR%20push%20commands%20window.png" alt="AWS ECR Push Commands" height="500">
 
-Copy the `aws ecr get-login-password...` command from the "View push commands" modal and run it in your terminal. It will authenticate your Docker client with your private AWS registry.
+### 4\. Authenticate Docker with ECR
 
-It will look like this:
+Copy the `aws ecr get-login-password...` command (Step 1 in the modal) and run it in your terminal to authenticate your Docker client.
 
-```sh
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <your-aws-account-id>.dkr.ecr.us-east-1.amazonaws.com
-```
+### 5\. Tag and Push the Image
 
-### 4\. Tag and Push the Image
+Copy the `docker tag` and `docker push` commands (Steps 3 and 4 in the modal) to upload your locally built image to ECR.
 
-Copy the `docker tag` and `docker push` commands from the same modal. This will upload your locally built image to ECR.
-
-```sh
-# Tag the image
-docker tag substack-scraper:latest <your-aws-account-id>[.dkr.ecr.us-east-1.amazonaws.com/substack-scraper:latest](https://.dkr.ecr.us-east-1.amazonaws.com/substack-scraper:latest)
-
-# Push the image
-docker push <your-aws-account-id>[.dkr.ecr.us-east-1.amazonaws.com/substack-scraper:latest](https://.dkr.ecr.us-east-1.amazonaws.com/substack-scraper:latest)
-```
-
-### 5\. Create the Lambda Function
+### 6\. Create the Lambda Function
 
 1.  In the AWS Console, navigate to **Lambda** \> **Create function**.
-2.  Select **Container image**.
-3.  **Function name**: `substack-scraper`.
-4.  **Container image URI**: Click **Browse images** and select the `substack-scraper:latest` image from your ECR repository.
+
+2.  Select the **Container image** option.
+
+    <img src="images/Create%20Lambda%20function%20screen.png" alt="Create Lambda Function" height="600">
+
+3.  Under **Basic information**, provide a **Function name** (`substack-scraper`).
+
+4.  For the **Container image URI**, click **Browse images**. Select your `substack-scraper` repository and choose the image with the `latest` tag.
+
+    <img src="images/Select%20container%20image%20modal.png" alt="Select Container Image Modal" height="400">
+
 5.  Click **Create function**.
 
-### 6\. Configure Lambda Settings
+### 7\. Configure Lambda Settings
 
-After creation, adjust the function's configuration for performance and functionality.
+After creation, adjust the function's configuration.
 
 1.  Navigate to **Configuration** \> **General configuration** \> **Edit**.
+
     - **Memory**: **1536 MB** (Recommended for Playwright)
     - **Timeout**: **5 minutes**
-2.  Navigate to **Configuration** \> **Container image** \> **Edit**.
-    - Under **Container image overrides**, verify the `Command` is set to `["main.lambda_handler"]`. This tells Lambda which function inside your Python script to run.
-3.  Navigate to **Configuration** \> **Environment variables** \> **Edit**.
-    - Click **Add environment variable**.
-    - **Key**: `WEBHOOK_URL`
-    - **Value**: `<your_webhook_endpoint>`
+
+    <img src="images/Lambda%20general%20configuration.png" alt="Lambda General Configuration" height="200">
+
+2.  Navigate to **Configuration** \> **Environment variables** \> **Edit**. Add the following:
+
+    - **Required**:
+      - `WEBHOOK_URL`: The endpoint where the scraper sends results.
+    - **Optional**:
+      - `DEBUG`: Set to `1` to enable verbose logging and include raw API data in the output.
+      - `NOTE_SEARCH_MAX_PAGES`: A global override for the number of pages to scrape per job.
+
+    <img src="images/Lambda%20environment%20variables.png" alt="Lambda Environment Variables" height="300">
+
+3.  Navigate to **Configuration** \> **Container image** \> **Edit**.
+
+    - Under **Container image overrides**, the `CMD` field can be left blank, as the `Dockerfile` already sets the correct default (`["main.lambda_handler"]`).
+
+    <img src="images/Lambda%20CMD%20override%20setting.png" alt="Lambda CMD Override Setting" height="300">
 
 ---
 
@@ -103,7 +126,13 @@ After creation, adjust the function's configuration for performance and function
 
 ### On-Demand Runs
 
-Use the **Test** tab in the Lambda console. Create a new test event, paste the contents of `test-event.json`, and invoke the function to run specific, one-off jobs.
+Use the **Test** tab in the Lambda console. Create a new test event, paste the contents of `test-event.json`, and invoke the function.
+
+<img src="images/Lambda%20test%20event%20configuration.png" alt="Lambda Test Event Configuration" height="600">
+
+A successful run will show a "succeeded" status and return the counts of notes found.
+
+<img src="images/Successful%20Lambda%20execution%20log.jpg" alt="Successful Lambda Execution Log" height="600">
 
 ### Scheduled Runs
 
@@ -114,13 +143,13 @@ Use the **Test** tab in the Lambda console. Create a new test event, paste the c
 5.  Select **Schedule expression** and provide a cron expression (e.g., `cron(0 12 * * ? *)` for a daily run at 12:00 PM UTC).
 6.  Click **Add**.
 
-Scheduled runs will use the jobs defined in the `config.json` file.
+Scheduled runs use the jobs defined in the `config.json` file.
 
 ---
 
 ## Webhook Payload Structure
 
-Your webhook endpoint will receive a `POST` request with a JSON body structured as follows. The top-level `results` key contains an array where each item corresponds to a job that was run.
+Your webhook endpoint will receive a `POST` request with a JSON body structured as follows.
 
 ```json
 {
@@ -149,8 +178,4 @@ Your webhook endpoint will receive a `POST` request with a JSON body structured 
     }
   ]
 }
-```
-
-```
-
 ```
