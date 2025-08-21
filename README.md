@@ -43,8 +43,6 @@ Build the image using the `--platform` flag to ensure compatibility with the AWS
 docker build --platform linux/amd64 -t substack-scraper .
 ```
 
-````
-
 ### 2\. Create ECR Repository & Get Push Commands
 
 It's easiest to create the repository via the AWS website, as it provides the necessary login and push commands.
@@ -152,4 +150,7 @@ Your webhook endpoint will receive a `POST` request with a JSON body structured 
   ]
 }
 ```
-````
+
+```
+
+```
